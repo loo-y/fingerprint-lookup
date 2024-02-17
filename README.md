@@ -11,7 +11,6 @@ wasm-bindgen target/wasm32-unknown-unknown/debug/fingerprint_lookup.wasm --out-d
 ```bash
 # release
 wasm-pack build --target web
-wasm-bindgen target/wasm32-unknown-unknown/release/fingerprint_lookup.wasm --out-dir ./output
 ```
                                                               
 ### import in React
