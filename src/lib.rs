@@ -1,10 +1,12 @@
 use js_sys::Object;
 use js_sys::Reflect;
+use wasm_bindgen::convert::IntoWasmAbi;
 use wasm_bindgen::prelude::*;
 use web_sys::window;
 use web_sys::CryptoKey;
 use web_sys::{Crypto, SubtleCrypto, AesCbcParams};
 use serde_json;
+use base64;
 use js_sys::Promise;
 use wasm_bindgen_futures::JsFuture;
 // use wasm_bindgen::JsCast;
@@ -25,12 +27,19 @@ extern "C" {
 // }
 
 async fn await_promise(promise_result: Result<Promise, JsValue>) -> Result<JsValue, JsValue> {
-    let promise = promise_result?;
-    let result = JsFuture::from(promise).await?;
-    Ok(result)
+    match promise_result {
+        Ok(promise) => {
+            // let promise = promise_result?;
+            let result = JsFuture::from(promise).await?;
+            Ok(result)
+        },
+        Err(err) => {
+            return Err(err);
+        }   
+    }
 }
 
-async fn encrypt(data: &str, key: &CryptoKey) -> Result<String, JsValue> {
+async fn encrypt(data: &str, key: &CryptoKey) -> String {
     let crypto: Crypto = web_sys::window().unwrap().crypto().unwrap();
     let subtle: SubtleCrypto = crypto.subtle();
     let x = "xxx";
@@ -39,11 +48,24 @@ async fn encrypt(data: &str, key: &CryptoKey) -> Result<String, JsValue> {
     Reflect::set(&data_object, &"data".into(), &data.into()).unwrap();
     // data_object.create("data", data);
     // data_object.data = data;
-    let encryptedData = subtle.encrypt_with_str_and_buffer_source("AES-CBC", key, &data_object);
+    let encrypted_data: Result<Promise, JsValue> = subtle.encrypt_with_str_and_buffer_source("AES-CBC", key, &data_object);
     
-    let result: Result<JsValue, JsValue> = await_promise(encryptedData).await;
+    let result: Result<JsValue, JsValue> = await_promise(encrypted_data).await;
 
-    result
+    let ciphertext: String = match result {
+        Ok(value) => {
+            let result_string = js_sys::JSON::stringify(&value).unwrap();
+            // Ok(result_string.into())
+            result_string.into()
+        },
+        Err(err) => {
+            log(std::format!("Error: {:?}", err).as_str());
+            // Err(String::new().into()) // 如果加密失败，则返回空字符串
+            String::new().into()
+        }
+    };
+
+    base64::encode(&ciphertext)
 }
 
 // fn encrypt(data: &String) -> String {
