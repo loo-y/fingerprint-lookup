@@ -39,16 +39,29 @@ async fn await_promise(promise_result: Result<Promise, JsValue>) -> Result<JsVal
     }
 }
 
-async fn encrypt(data: &str, key: &CryptoKey) -> String {
+async fn encrypt(data: &str) -> String {
     let crypto: Crypto = web_sys::window().unwrap().crypto().unwrap();
     let subtle: SubtleCrypto = crypto.subtle();
-    let x = "xxx";
+    let algorithm =  Object::new();
+    Reflect::set(&algorithm, &"name".into(), &"RSA-OAEP".into()).unwrap();
+    let key_pair = subtle.generate_key_with_object(
+        &algorithm,
+        true,
+        &JsValue::from_str("encrypt, decrypt"),
+    );
+    let key_pair_promise = key_pair.unwrap();
+    let key_pair_end = JsFuture::from(key_pair_promise).await.unwrap();
+
+    let key: CryptoKey = CryptoKey::from(key_pair_end);
+
+    log(&format!("CryptoKey: {:?}", &key));
+
     // let algorithm = AesCbcParams::new("AES-CBC", iv.into());
     let data_object = Object::new();
     Reflect::set(&data_object, &"data".into(), &data.into()).unwrap();
     // data_object.create("data", data);
     // data_object.data = data;
-    let encrypted_data: Result<Promise, JsValue> = subtle.encrypt_with_str_and_buffer_source("AES-CBC", key, &data_object);
+    let encrypted_data: Result<Promise, JsValue> = subtle.encrypt_with_str_and_buffer_source("RSA-OAEP", &key, &data_object);
     
     let result: Result<JsValue, JsValue> = await_promise(encrypted_data).await;
 
@@ -93,14 +106,19 @@ pub fn check_environment() {
 }
 
 #[wasm_bindgen]
-pub fn get_browser_info() -> Option<String> {
+pub async fn get_browser_info() -> Option<String> {
     if let Some(window) = window() {
         
         let navigator = window.navigator();
         let user_agent = navigator.user_agent().unwrap();
-        let string1 = String::from("aabbcc");
-        let string2 = String::from(" 112233!");
-        return Some(string1 + &string2 + &user_agent);
+        let user_agent_start = String::from("user_agent_start ======> ");
+        let user_agent_end = String::from(" <====== user_agent_end");
+        
+        let user_agent_statment = user_agent_start + &user_agent + &user_agent_end;
+        
+        let encrypted_ua_statement = encrypt(&user_agent_statment).await;
+
+        return Some(encrypted_ua_statement);
         // let key = String::from("abcdefghijklmnopqrstuvwx");
         // let iv = String::from("1234567890123456");
         // let ss = string1 + &string2 + &user_agent;
