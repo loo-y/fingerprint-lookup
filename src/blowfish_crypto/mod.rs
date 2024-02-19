@@ -114,24 +114,24 @@ pub fn twice_encrypt(plain_text: &str, key: &str) -> Result<String, String> {
     let key_by_fisrt_encryption = &first_encryption[0..8];
     let key_transform = transform_text(&key_by_fisrt_encryption);
     let key_transform_base64 = base64::encode(key_transform);
-    let second_encryption = encipher(&first_encryption, &key_by_fisrt_encryption);
+    let second_encryption = encipher(&first_encryption, &key_transform_base64);
     if second_encryption.is_err() {
         return Err(key_by_fisrt_encryption.to_string());
     }
     let second_encryption = second_encryption.unwrap();
-    let final_encryption = String::new() + &key_transform_base64 + &second_encryption;
+    let final_encryption = String::new() + &key_by_fisrt_encryption + &second_encryption;
     Ok(final_encryption)
 }
 
 pub fn twice_decrypt(cipher_text: &str, key: &str) -> Result<String, String> {
-    // 先解 base64
-    let key_from_base64: &str = &cipher_text[0..12];
-    let key_transform = base64::decode(key_from_base64).unwrap();
-    let key_transform = String::from_utf8(key_transform).unwrap();
-
+    // 先获取8位 key
+    let key_by_fisrt_encryption: &str = &cipher_text[0..8];
     // 翻转 key
-    let key_by_fisrt_encryption = transform_text(&key_transform);
-    let second_decryption = decipher(&cipher_text[12..], &key_by_fisrt_encryption);
+    let key_transform = transform_text(&key_by_fisrt_encryption);
+    // base64
+    let key_transform_base64 = base64::encode(key_transform);
+
+    let second_decryption = decipher(&cipher_text[8..], &key_transform_base64);
     if second_decryption.is_err() {
         return Err(String::new())
     }
