@@ -106,7 +106,7 @@ pub fn check_environment() {
 }
 
 #[wasm_bindgen]
-pub async fn get_browser_info() -> Option<String> {
+pub fn get_browser_info() -> Option<String> {
     if let Some(window) = window() {
         
         let navigator = window.navigator();
@@ -114,11 +114,15 @@ pub async fn get_browser_info() -> Option<String> {
         let user_agent_start = String::from("user_agent_start ======> ");
         let user_agent_end = String::from(" <====== user_agent_end");
         
-        let user_agent_statment = user_agent_start + &user_agent + &user_agent_end;
-        
-        let encrypted_ua_statement = encrypt(&user_agent_statment).await;
+        let user_agent_statment = String::new() + &user_agent_start + &user_agent + &user_agent_end;
 
-        return Some(encrypted_ua_statement);
+        log(&user_agent_statment);
+
+        return Some(user_agent_statment);
+
+        // let encrypted_ua_statement = encrypt(&user_agent_statment).await;
+
+        // return Some(encrypted_ua_statement);
         // let key = String::from("abcdefghijklmnopqrstuvwx");
         // let iv = String::from("1234567890123456");
         // let ss = string1 + &string2 + &user_agent;
