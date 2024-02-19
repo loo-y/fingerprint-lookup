@@ -1,6 +1,5 @@
 use blowfish::{Blowfish, cipher::BlockDecrypt};
 use generic_array::GenericArray;
-use js_sys::Math::log;
 
 pub mod error;
 pub mod util;
