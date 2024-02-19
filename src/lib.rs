@@ -110,12 +110,15 @@ pub fn check_environment() {
 pub fn get_browser_info() -> Option<String> {
     if let Some(window) = window() {
         
-        let navigator = window.navigator();
+        let current_location = window.location();
+        let current_page_url = current_location.href().unwrap();
+        log(&format!("current_page_url: {}", &current_page_url));
+        let navigator: web_sys::Navigator = window.navigator();
         let user_agent = navigator.user_agent().unwrap();
         let user_agent_start = String::from("user_agent_start ======> ");
         let user_agent_end = String::from(" <====== user_agent_end");
         
-        let user_agent_statment = String::new() + &user_agent_start + &user_agent + &user_agent_end;
+        let user_agent_statment = String::new() + &current_page_url + &user_agent_start + &user_agent + &user_agent_end;
 
         log(&format!("original user_agent_statment: {}", &user_agent_statment));
 
