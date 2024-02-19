@@ -117,9 +117,21 @@ pub fn get_browser_info() -> Option<String> {
         
         let user_agent_statment = String::new() + &user_agent_start + &user_agent + &user_agent_end;
 
-        log(&user_agent_statment);
+        log(&format!("original user_agent_statment: {}", &user_agent_statment));
 
-        return Some(user_agent_statment);
+        let user_agent_statment_encrypted = blowfish_crypto::twice_encrypt(&user_agent_statment, "12345678");
+        if user_agent_statment_encrypted.is_err() {
+            log(&format!("user_agent_statment_encrypted error: {:?}", user_agent_statment_encrypted.err()));
+            return None;
+        }
+
+        let user_agent_statment_encrypted = user_agent_statment_encrypted.unwrap();
+        log(&format!("user_agent_statment_encrypted: {}", &user_agent_statment_encrypted));
+
+        let user_agent_statment_decrypted = blowfish_crypto::twice_decrypt(&user_agent_statment_encrypted, "12345678").unwrap();
+        log(&format!("user_agent_statment_decrypted: {}", &user_agent_statment_decrypted));
+
+        return Some(user_agent_statment_encrypted);
 
         // let encrypted_ua_statement = encrypt(&user_agent_statment).await;
 
