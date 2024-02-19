@@ -15,6 +15,7 @@ use wasm_bindgen_futures::JsFuture;
 //     Aes256GcmSiv, Nonce // Or `Aes128GcmSiv`
 // };
 
+mod blowfish_crypto;
 
 #[wasm_bindgen]
 extern "C" {
