@@ -1,7 +1,15 @@
 use wasm_bindgen::prelude::*;
 use web_sys::window;
-
 mod blowfish_crypto;
+use serde::{Deserialize, Serialize};
+use serde_json;
+
+#[derive(Serialize, Deserialize)]
+struct BrowserInfo {
+    is_browser: bool,
+    user_agent: String,
+    page_url: String,
+}
 
 #[wasm_bindgen]
 extern "C" {
@@ -10,7 +18,8 @@ extern "C" {
 }
 
 #[wasm_bindgen]
-pub fn check_environment() {
+pub fn check_environment() -> bool {
+    let is_browser = cfg!(target_arch = "wasm32");
     let environment = if cfg!(target_arch = "wasm32") {
         "Browser"
     } else {
@@ -18,12 +27,14 @@ pub fn check_environment() {
     };
 
     log(&format!("Current environment: {}", environment));
+    
+    is_browser
 }
 
 #[wasm_bindgen]
 pub fn get_browser_info() -> Option<String> {
     if let Some(window) = window() {
-        
+        let is_browser = check_environment();
         let current_location = window.location();
         let current_page_url = current_location.href().unwrap();
         log(&format!("current_page_url: {}", &current_page_url));
@@ -34,21 +45,29 @@ pub fn get_browser_info() -> Option<String> {
         
         let user_agent_statment = String::new() + &current_page_url + &user_agent_start + &user_agent + &user_agent_end;
 
-        log(&format!("original user_agent_statment: {}", &user_agent_statment));
+        let browser_info_json = BrowserInfo {
+            is_browser,
+            user_agent: user_agent,
+            page_url: current_page_url,
+        };
 
-        let user_agent_statment_encrypted = blowfish_crypto::twice_encrypt(&user_agent_statment, "12345678");
-        if user_agent_statment_encrypted.is_err() {
-            log(&format!("user_agent_statment_encrypted error: {:?}", user_agent_statment_encrypted.err()));
+        let browser_info = serde_json::to_string(&browser_info_json).unwrap();
+
+        log(&format!("original browser_info: {}", &browser_info));
+
+        let browser_info_encrypted = blowfish_crypto::twice_encrypt(&browser_info, "12345678");
+        if browser_info_encrypted.is_err() {
+            log(&format!("browser_info_encrypted error: {:?}", browser_info_encrypted.err()));
             return None;
         }
 
-        let user_agent_statment_encrypted = user_agent_statment_encrypted.unwrap();
-        log(&format!("user_agent_statment_encrypted: {}", &user_agent_statment_encrypted));
+        let browser_info_encrypted = browser_info_encrypted.unwrap();
+        log(&format!("browser_info_encrypted: {}", &browser_info_encrypted));
 
-        let user_agent_statment_decrypted = blowfish_crypto::twice_decrypt(&user_agent_statment_encrypted, "12345678").unwrap();
-        log(&format!("user_agent_statment_decrypted: {}", &user_agent_statment_decrypted));
+        let browser_info_decrypted = blowfish_crypto::twice_decrypt(&browser_info_encrypted, "12345678").unwrap();
+        log(&format!("browser_info_decrypted: {}", &browser_info_decrypted));
 
-        return Some(user_agent_statment_encrypted);
+        return Some(browser_info_encrypted);
     }
 
     None
