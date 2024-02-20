@@ -92,7 +92,7 @@ pub fn transform_text(plain_text: &str) -> String {
         } else if ch.is_ascii_alphabetic() {
             let lowercase_ch = ch.to_ascii_lowercase();
             let index = (lowercase_ch as u8 - b'a') as u8;
-            let desc_index = (26 - index) % 26;
+            let desc_index = 25 - index;
             (b'a' + desc_index) as char
         } else {
             ch
