@@ -3,3 +3,7 @@
 /output
 
 .DS_Store
+
+.vscode
+
+/fingerprint-decrypt/target
