@@ -48,10 +48,9 @@ pub fn get_browser_info() -> Option<String> {
         log(&format!("current_page_url: {}", &current_page_url));
         let navigator: web_sys::Navigator = window.navigator();
         let user_agent = navigator.user_agent().unwrap();
-        let user_agent_start = String::from("user_agent_start ======> ");
-        let user_agent_end = String::from(" <====== user_agent_end");
-        
-        let user_agent_statment = String::new() + &current_page_url + &user_agent_start + &user_agent + &user_agent_end;
+        // let user_agent_start = String::from("user_agent_start ======> ");
+        // let user_agent_end = String::from(" <====== user_agent_end");
+        // let user_agent_statment = String::new() + &current_page_url + &user_agent_start + &user_agent + &user_agent_end;
 
         let now = get_current_time();
 
@@ -64,7 +63,7 @@ pub fn get_browser_info() -> Option<String> {
 
         let browser_info = serde_json::to_string(&browser_info_json).unwrap();
 
-        log(&format!("original browser_info: {}", &browser_info));
+        // log(&format!("original browser_info: {}", &browser_info));
 
         let browser_info_encrypted = blowfish_crypto::twice_encrypt(&browser_info, "12345678");
         if browser_info_encrypted.is_err() {
@@ -75,8 +74,8 @@ pub fn get_browser_info() -> Option<String> {
         let browser_info_encrypted = browser_info_encrypted.unwrap();
         log(&format!("browser_info_encrypted: {}", &browser_info_encrypted));
 
-        let browser_info_decrypted = blowfish_crypto::twice_decrypt(&browser_info_encrypted, "12345678").unwrap();
-        log(&format!("browser_info_decrypted: {}", &browser_info_decrypted));
+        // let browser_info_decrypted = blowfish_crypto::twice_decrypt(&browser_info_encrypted, "12345678").unwrap();
+        // log(&format!("browser_info_decrypted: {}", &browser_info_decrypted));
 
         return Some(browser_info_encrypted);
     }
