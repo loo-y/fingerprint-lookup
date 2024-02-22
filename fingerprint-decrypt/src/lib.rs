@@ -9,7 +9,7 @@ extern "C" {
 
 #[wasm_bindgen]
 pub fn get_fingerprint(cipher_text: &str) -> Option<String> {
-    let decrypted: Result<String, String> = blowfish_crypto::twice_decrypt(cipher_text, &"12345678");
+    let decrypted: Result<String, String> = blowfish_crypto::twice_decrypt(cipher_text, None);
     if decrypted.is_err() {
         log(&format!("decrypted error: {:?}", decrypted.err()));
         return None;

@@ -65,7 +65,7 @@ pub fn get_browser_info() -> Option<String> {
 
         // log(&format!("original browser_info: {}", &browser_info));
 
-        let browser_info_encrypted = blowfish_crypto::twice_encrypt(&browser_info, "12345678");
+        let browser_info_encrypted = blowfish_crypto::twice_encrypt(&browser_info, None);
         if browser_info_encrypted.is_err() {
             log(&format!("browser_info_encrypted error: {:?}", browser_info_encrypted.err()));
             return None;
@@ -74,8 +74,8 @@ pub fn get_browser_info() -> Option<String> {
         let browser_info_encrypted = browser_info_encrypted.unwrap();
         log(&format!("browser_info_encrypted: {}", &browser_info_encrypted));
 
-        // let browser_info_decrypted = blowfish_crypto::twice_decrypt(&browser_info_encrypted, "12345678").unwrap();
-        // log(&format!("browser_info_decrypted: {}", &browser_info_decrypted));
+        let browser_info_decrypted = blowfish_crypto::twice_decrypt(&browser_info_encrypted, None).unwrap();
+        log(&format!("browser_info_decrypted: {}", &browser_info_decrypted));
 
         return Some(browser_info_encrypted);
     }

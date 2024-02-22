@@ -1,6 +1,6 @@
 use blowfish::{Blowfish, cipher::BlockDecrypt};
 use generic_array::GenericArray;
-
+use getrandom::{getrandom, Error};
 pub mod error;
 pub mod util;
 
@@ -104,8 +104,25 @@ pub fn transform_text(plain_text: &str) -> String {
     result
 }
 
-pub fn twice_encrypt(plain_text: &str, key: &str) -> Result<String, String> {
-    let first_encryption = encipher(plain_text, key);
+pub fn twice_encrypt(plain_text: &str, key: Option<String>) -> Result<String, String> {
+    let random_string = generate_random_string(8);
+    let random_key = encipher(&random_string, &random_string).unwrap();
+    // 取前8位
+    let random_key = &random_key[0..8];
+    // 翻转
+    let random_key_transform = transform_text(&random_key);
+    // base64
+    let random_key_transform_base64 = base64::encode(random_key_transform);
+    let first_encryption = match key {
+        Some(value) => {
+            encipher(plain_text, &value)
+         }
+        None => {
+
+            encipher(plain_text, &random_key_transform_base64)
+        }
+    };
+
     if first_encryption.is_err() {
         return Err("first_encryption.is_err()".to_string())
     }
@@ -113,32 +130,74 @@ pub fn twice_encrypt(plain_text: &str, key: &str) -> Result<String, String> {
     let key_by_fisrt_encryption = &first_encryption[0..8];
     let key_transform = transform_text(&key_by_fisrt_encryption);
     let key_transform_base64 = base64::encode(key_transform);
-    let second_encryption = encipher(&first_encryption, &key_transform_base64);
+    let combined_transform_base64 = String::new() + &random_key_transform_base64 + &key_transform_base64;
+    let second_encryption = encipher(&first_encryption, &combined_transform_base64);
     if second_encryption.is_err() {
         return Err(key_by_fisrt_encryption.to_string());
     }
     let second_encryption = second_encryption.unwrap();
-    let final_encryption = String::new() + &key_by_fisrt_encryption + &second_encryption;
+    let final_encryption = String::new() + &random_key + &key_by_fisrt_encryption + &second_encryption;
     Ok(final_encryption)
 }
 
-pub fn twice_decrypt(cipher_text: &str, key: &str) -> Result<String, String> {
-    // 先获取8位 key
-    let key_by_fisrt_encryption: &str = &cipher_text[0..8];
+pub fn twice_decrypt(cipher_text: &str,  key: Option<String>) -> Result<String, String> {
+    // 获取前8位random key
+    let random_key = &cipher_text[0..8];
+    // 翻转
+    let random_key_transform = transform_text(&random_key);
+    // base64
+    let random_key_transform_base64 = base64::encode(random_key_transform);
+
+    // 获取9-16位 key
+    let key_by_fisrt_encryption: &str = &cipher_text[8..16];
     // 翻转 key
     let key_transform = transform_text(&key_by_fisrt_encryption);
     // base64
     let key_transform_base64 = base64::encode(key_transform);
 
-    let second_decryption = decipher(&cipher_text[8..], &key_transform_base64);
+    let combined_transform_base64 = String::new() + &random_key_transform_base64 + &key_transform_base64;
+
+    let second_decryption = decipher(&cipher_text[16..], &combined_transform_base64);
     if second_decryption.is_err() {
         return Err(String::new())
     }
     let second_decryption = second_decryption.unwrap();
-    let first_decryption = decipher(&second_decryption, &key);
+    let first_decryption = match key {
+        Some(value) => {
+            decipher(&second_decryption, &value)
+         }
+        None => {
+            decipher(&second_decryption, &random_key_transform_base64)
+        }
+    };
+
     if first_decryption.is_err() {
         return Err(String::new())
     }
 
     Ok(first_decryption.unwrap())
+}
+
+fn generate_random_string(length: usize) -> String {
+    let mut byte = [0u8; 1];
+    let mut result = String::new();
+
+    loop{
+        if getrandom(&mut byte).is_err() {
+            continue;
+        }
+        let digit = byte[0] % 36;
+        let ch = if digit < 10 {
+            (b'0' + digit) as char
+        } else {
+            (b'a' + (digit - 10)) as char
+        };
+
+        result.push(ch);
+        if result.len() >= length {
+            break;
+        }
+    }
+
+    result
 }
